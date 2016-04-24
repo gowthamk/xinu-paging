@@ -1,0 +1,10 @@
+
+   asm("movl %0, %%eax; \
+        movl %%eax, %%cr3"
+        : /* No output */
+        :"r"(pdir)
+        :"%eax");
+
+   asm("movl %cr0, %eax; \
+         orl $0x80000000, %eax; \
+         movl %eax, %cr0"); 
