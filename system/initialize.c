@@ -13,7 +13,6 @@ extern	void	*_end;		/* End of Xinu code			*/
 extern	void main(void);	/* Main is the first process created	*/
 extern	void xdone(void);	/* System "shutdown" procedure		*/
 static	void sysinit(); 	/* Internal system initialization	*/
-static  void initialize_paging(); /* Paging initialization */
 extern	void meminit(void);	/* Initializes the free memory list	*/
 
 /* Declarations of major kernel variables */
@@ -44,6 +43,14 @@ sid32   bs_init_sem;
  */
 /* For paging */
 unsigned long tmp;
+char* pf_test_ptr = (char *)0x80000000;
+
+void test_paging() {
+    char* p = pf_test_ptr;
+    asm("movl %eax, 0x80000000");
+    //kprintf("Value at 0x%08X is %d\n",p,*p);
+    return;
+}
 
 void	nulluser()
 {	
@@ -54,6 +61,15 @@ void	nulluser()
 		
 	sysinit();
 
+    /* Initialize paging for null process */
+    pd_t* pdir = initialize_paging();
+
+    /* enable paging */
+    enable_paging(pdir);
+
+    /* testing paging*/
+    //test_paging();
+    
 	kprintf("\n\r%s\n\n\r", VERSION);
 	
 	/* Output Xinu memory layout */
@@ -103,110 +119,6 @@ void	nulluser()
 		;		/* Do nothing */
 	}
 
-}
-
-/*------------------------------------------------------------------------
- *
- * initalize_paging - Initialize virtual memory and demand paging.
- *
- *------------------------------------------------------------------------
- */
-void write_cr0(unsigned long n) {
-
-  intmask ps = disable();
-
-  tmp = n;
-  asm("pushl %eax");
-  asm("movl tmp, %eax");        /* mov (move) value at tmp into %eax register. 
-                       "l" signifies long (see docs on gas assembler)   */
-  asm("movl %eax, %cr0");
-  asm("popl %eax");
-  restore(ps);
-}
-unsigned long read_cr0(void) {
-  unsigned long local_tmp;
-  intmask ps;
-  ps = disable();
-  asm("pushl %eax");
-  asm("movl %cr0, %eax");
-  asm("movl %eax, tmp");
-  asm("popl %eax");
-  local_tmp = tmp;
-  restore(ps);
-  return local_tmp;
-}
-
-void write_cr3(unsigned long n) {
-  intmask ps;
-  ps = disable();
-  tmp = n;
-  asm("pushl %eax");
-  asm("movl tmp, %eax");                
-  asm("movl %eax, %cr3");
-  asm("popl %eax");
-  restore(ps);
-}
-
-unsigned long read_cr3(void) {
-  unsigned long local_tmp;
-  intmask ps;
-  ps = disable();
-  asm("pushl %eax");
-  asm("movl %cr3, %eax");
-  asm("movl %eax, tmp");
-  asm("popl %eax");
-  local_tmp = tmp;
-  restore(ps);
-  return local_tmp;
-}
-
-void enable_paging()
-{
-    unsigned long cr0;
-    kprintf("enabling paging\n");
-    cr0  = read_cr0 ();
-    cr0 |= 0x80000001;
-    write_cr0 (cr0);
-    cr0 = read_cr0 ();
-    kprintf("cr0: %x, cr3 %x\n", read_cr0(), read_cr3());
-}
-
-static void initialize_paging() {
-    pd_t* pdir = (pd_t*)getframe();
-    pt_t* ptab;
-    int i,j;
-    int n_pd_entries = NBPG / (sizeof(pd_t));
-    int n_pt_entries = NBPG / (sizeof(pt_t));
-    /* All page tables are writable */
-    for(i=0;i<n_pd_entries; i++) {
-        pdir[i].pd_write = 1;
-    }
-    /* First four page tables are global page tables */
-    i=0;
-    while(TRUE) {
-        ptab = (pt_t*)getframe();
-        for(j=0; j<n_pt_entries; j++) {
-            /* jth entry in ith page table is (i*2^10)+j*/
-            ptab[j].pt_base = (i<<10)+j;
-            /* It is writable and the page is present */
-            ptab[j].pt_write = 1;
-            ptab[j].pt_pres = 1;
-        }
-        /* ith page table is present in the memory */
-        pdir[i].pd_pres = 1;
-        pdir[i].pd_base = (uint32)ptab >> 12;
-        kprintf("%dth entry in page directory is 0x%05X\n",i,pdir[i].pd_base);
-        if (i<3) {
-            i = i+1;
-        } else if (i==3) {
-            i = 576;
-        } else if (i==576) {
-            break;
-        }
-    }
-    write_cr3((unsigned long)pdir);
-    kprintf("cr0: %x, cr3 %x\n", read_cr0(), read_cr3());
-    return;
 }
 
 /*------------------------------------------------------------------------
@@ -292,10 +204,9 @@ static	void	sysinit()
         PAGE_SERVER_STATUS = PAGE_SERVER_INACTIVE;
         bs_init_sem = semcreate(1);
 
-    /* initialize paging */
-    initialize_paging();
-    enable_paging();
-
+    /* Install page fault handler */
+    set_evec(14, (uint32) pfisr);
+    
 	return;
 }
 

@@ -16,7 +16,7 @@ SRC_SFILES =
 #------------------------------------------------------------------
 
 SYSTEM_SFILES =                                                                 \
-	clkdisp.S     ctxsw.S       intr.S        start.S     
+	pfisr.S    clkdisp.S     ctxsw.S       intr.S        start.S     
 
 SYSTEM_CFILES =                                                                 \
 	ascdate.c     bufinit.c     chprio.c      clkhandler.c  clkinit.c       \
@@ -34,7 +34,8 @@ SYSTEM_CFILES =                                                                 
 	semcount.c    semcreate.c   semdelete.c   semreset.c    send.c          \
 	signal.c      signaln.c     sleep.c       stacktrace.c  suspend.c       \
 	unsleep.c     userret.c     wait.c        wakeup.c      write.c         \
-	xdone.c       yield.c       getframe.c
+	xdone.c       yield.c       getframe.c    pfhandler.c   regio.c         \
+    initpaging.c
 
 SRC_CFILES   += ${SYSTEM_CFILES}
 SRC_SFILES   += ${SYSTEM_SFILES}
@@ -251,6 +252,14 @@ SRC_FULL    = ${SRC_CFULL} ${SRC_SFULL}
 #  Rules for files in directory ../system
 #------------------------------------------------------------------
 
+binaries/initpaging.o:         ../system/initpaging.c
+	${CC} ${CFLAGS} -o binaries/initpaging.o ../system/initpaging.c
+binaries/regio.o:         ../system/regio.c
+	${CC} ${CFLAGS} -o binaries/regio.o ../system/regio.c
+binaries/pfhandler.o:         ../system/pfhandler.c
+	${CC} ${CFLAGS} -o binaries/pfhandler.o ../system/pfhandler.c
+binaries/pfisr.o:         ../system/pfisr.S
+	${CC} ${CFLAGS} -o binaries/pfisr.o ../system/pfisr.S
 binaries/getframe.o:          ../system/getframe.c
 	${CC} ${CFLAGS} -o binaries/getframe.o ../system/getframe.c
 binaries/clkdisp.o:         ../system/clkdisp.S

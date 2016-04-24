@@ -41,6 +41,10 @@ extern	void	clkinit(void);
 
 extern	void	clkdisp(void);
 
+/* in file pfisr.S */
+
+extern	void    pfisr(void);
+
 /* in file close.c */
 
 extern	syscall	close(did32);
@@ -674,6 +678,14 @@ extern	void	xdone(void);
 
 /* in file yield.c */
 extern	syscall	yield(void);
+
+/* in file regio.c */
+extern unsigned long read_cr0();
+extern void write_cr0(unsigned long n);
+extern unsigned long read_cr2();
+extern void write_cr2(unsigned long n);
+extern unsigned long read_cr3();
+extern void write_cr3(unsigned long n);
 
 /* NETWORK BYTE ORDER CONVERSION NOT NEEDED ON A BIG-ENDIAN COMPUTER */
 #define	htons(x)   ( ( 0xff & ((x)>>8) ) | ( (0xff & (x)) << 8 ) )

@@ -52,3 +52,8 @@ typedef struct {
 
 #define MAX_ID		7		/* You get 8 mappings, 0 - 7 */
 #define MIN_ID          0
+
+/* in file initpaging.c */
+extern pd_t* initialize_paging(void);
+extern void enable_paging(pd_t* pdir);
+
