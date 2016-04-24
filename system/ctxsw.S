@@ -12,6 +12,8 @@ ctxsw:
 		movl	%esp,%ebp	/* Record current SP in ebp	*/
 		pushfl			/* Push flags onto the stack	*/
 		pushal			/* Push general regs. on stack	*/
+        movl    %cr3, %eax
+        pushl   %eax    /* Push PDBR */
 
 		/* Save old segment registers here, if multiple allowed */
 
@@ -28,6 +30,8 @@ ctxsw:
 
 		/* Restore new seg. registers here, if multiple allowed */
 
+        popl    %eax
+        movl    %eax, %cr3  /* Restore cr3 */
 		popal			/* Restore general registers	*/
 		movl	4(%esp),%ebp	/* Pick up ebp before restoring	*/
 					/*   interrupts			*/
