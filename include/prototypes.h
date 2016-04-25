@@ -687,6 +687,10 @@ extern void write_cr2(unsigned long n);
 extern unsigned long read_cr3();
 extern void write_cr3(unsigned long n);
 
+/* in file vcreate.c */
+
+extern	pid32	vcreate(void *, uint32, uint32, pri16, char *, uint32, ...);
+
 /* NETWORK BYTE ORDER CONVERSION NOT NEEDED ON A BIG-ENDIAN COMPUTER */
 #define	htons(x)   ( ( 0xff & ((x)>>8) ) | ( (0xff & (x)) << 8 ) )
 #define	htonl(x)   (  (((x)>>24) & 0x000000ff) | (((x)>> 8) & 0x0000ff00) | \

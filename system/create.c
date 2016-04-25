@@ -46,6 +46,8 @@ pid32	create(
 	prptr->prprio = priority;
 	prptr->prstkbase = (char *)saddr;
 	prptr->prstklen = ssize;
+    prptr->prpdir = (void*) (FRAME0*NBPG);
+    prptr->prhsize = INITHEAP;
 	prptr->prname[PNMLEN-1] = NULLCH;
 	for (i=0 ; i<PNMLEN-1 && (prptr->prname[i]=name[i])!=NULLCH; i++)
 		;
@@ -95,6 +97,8 @@ pid32	create(
 	*--saddr = savsp;		/* %ebp (while finishing ctxsw)	*/
 	*--saddr = 0;			/* %esi */
 	*--saddr = 0;			/* %edi */
+    *--saddr = (long)(FRAME0 * NBPG);  /* store page dir addr so that it can be
+                                          restored to cr3 from ctxsw */
 	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
 	restore(mask);
 	return pid;

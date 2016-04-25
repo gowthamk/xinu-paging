@@ -25,6 +25,7 @@ unsigned long read_cr0(void) {
 }
 
 void write_cr3(unsigned long n) {
+  kprintf("Writing 0x%08X into CR3\n",n);
   intmask ps;
   ps = disable();
   tmp = n;

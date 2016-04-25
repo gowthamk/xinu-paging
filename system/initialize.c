@@ -95,12 +95,14 @@ void	nulluser()
 
 	/* Create the RDS process */
 
+    /* -- ENABLE THIS LATER ---
 	rdstab[0].rd_comproc = create(rdsprocess, RD_STACK, RD_PRIO,
 					"rdsproc", 1, &rdstab[0]);
 	if(rdstab[0].rd_comproc == SYSERR) {
 		panic("Cannot create remote disk process");
 	}
 	resume(rdstab[0].rd_comproc);
+    */
 
 	/* Enable interrupts */
 
@@ -109,7 +111,7 @@ void	nulluser()
 	/* Create a process to execute function main() */
 
 	resume (
-	   create((void *)main, INITSTK, INITPRIO, "Main process", 0,
+	   vcreate((void *)main, INITSTK, INITHEAP, INITPRIO, "Main process", 0,
            NULL));
 
 	/* Become the Null process (i.e., guarantee that the CPU has	*/
@@ -174,6 +176,8 @@ static	void	sysinit()
 	prptr->prstkbase = getstk(NULLSTK);
 	prptr->prstklen = NULLSTK;
 	prptr->prstkptr = 0;
+    prptr->prpdir = (void*) (FRAME0*NBPG);
+    prptr->prhsize = INITHEAP;
 	currpid = NULLPROC;
 	
 	/* Initialize semaphores */

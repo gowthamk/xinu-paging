@@ -39,6 +39,9 @@ pid32	vcreate(
 		return SYSERR;
 	}
 
+    /* Initialize paging for this process */
+    pd_t* pdir = initialize_paging();
+
 	prcount++;
 	prptr = &proctab[pid];
 
@@ -47,6 +50,8 @@ pid32	vcreate(
 	prptr->prprio = priority;
 	prptr->prstkbase = (char *)saddr;
 	prptr->prstklen = ssize;
+    prptr->prpdir = (void*)pdir;
+    prptr->prhsize = hsize;
 	prptr->prname[PNMLEN-1] = NULLCH;
 	for (i=0 ; i<PNMLEN-1 && (prptr->prname[i]=name[i])!=NULLCH; i++)
 		;
@@ -63,9 +68,6 @@ pid32	vcreate(
 
 	*saddr = STACKMAGIC;
 	savsp = (uint32)saddr;
-
-    /* Initialize paging for this process */
-    pd_t* pdir = initialize_paging();
 
 	/* Push arguments */
 	a = (uint32 *)(&nargs + 1);	/* Start of args		*/
@@ -98,8 +100,8 @@ pid32	vcreate(
 	*--saddr = savsp;		/* %ebp (while finishing ctxsw)	*/
 	*--saddr = 0;			/* %esi */
 	*--saddr = 0;			/* %edi */
-    *--saddr = (long)pdir; /* store page dir addr so that it can be
-                              restored to cr3 from ctxsw */
+    *--saddr = (long)pdir;  /* store page dir addr so that it can be
+                               restored to cr3 from ctxsw */
 
 	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
 	restore(mask);
