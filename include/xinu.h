@@ -41,4 +41,5 @@
 #include <stdio.h>
 #include <string.h>
 #include <paging.h>
+#include <vmemory.h>
 #include <page_server.h>

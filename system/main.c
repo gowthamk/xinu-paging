@@ -2,7 +2,7 @@
 
 #include <xinu.h>
 #include <stdio.h>
-
+extern process test_vmemlist(void);
 process	main(void)
 {
 
@@ -16,15 +16,20 @@ process	main(void)
 
 	kprintf("\n...creating a shell\n");
 	recvclr();
-	resume(vcreate(shell, 8192, INITHEAP, 50, "shell", 1, CONSOLE));
+    kprintf("PROCESS for vmemory test\n");
+    resume(vcreate(test_vmemlist, 8192, INITHEAP, 50, "test_vmemlist",0));
+	
+    //resume(vcreate(shell, 8192, INITHEAP, 50, "shell", 1, CONSOLE));
 
 	/* Wait for shell to exit and recreate it */
 
+    /*
 	while (TRUE) {
 		receive();
 		sleepms(200);
 		kprintf("\n\nMain process recreating shell\n\n");
 		resume(vcreate(shell, 4096, INITHEAP, 20, "shell", 1, CONSOLE));
 	}
+    */
 	return OK;
 }

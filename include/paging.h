@@ -57,4 +57,3 @@ typedef struct {
 extern pd_t* get_nullpdir();
 extern pd_t* initialize_paging(void);
 extern void enable_paging(pd_t* pdir);
-

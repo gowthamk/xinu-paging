@@ -42,6 +42,9 @@ pid32	vcreate(
     /* Initialize paging for this process */
     pd_t* pdir = initialize_paging();
 
+    /* Initialize virtual memory data structures */
+    struct memblk* vmemlist = vmeminit(hsize);
+
 	prcount++;
 	prptr = &proctab[pid];
 
@@ -52,6 +55,7 @@ pid32	vcreate(
 	prptr->prstklen = ssize;
     prptr->prpdir = (void*)pdir;
     prptr->prhsize = hsize;
+    prptr->prvmemlist = vmemlist;
 	prptr->prname[PNMLEN-1] = NULLCH;
 	for (i=0 ; i<PNMLEN-1 && (prptr->prname[i]=name[i])!=NULLCH; i++)
 		;

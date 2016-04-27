@@ -48,6 +48,7 @@ pid32	create(
 	prptr->prstklen = ssize;
     prptr->prpdir = (void*) get_nullpdir();
     prptr->prhsize = INITHEAP;
+    prptr->prvmemlist = NULL;
 	prptr->prname[PNMLEN-1] = NULLCH;
 	for (i=0 ; i<PNMLEN-1 && (prptr->prname[i]=name[i])!=NULLCH; i++)
 		;
