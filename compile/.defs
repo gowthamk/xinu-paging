@@ -35,7 +35,7 @@ SYSTEM_CFILES =                                                                 
 	signal.c      signaln.c     sleep.c       stacktrace.c  suspend.c       \
 	unsleep.c     userret.c     wait.c        wakeup.c      write.c         \
 	xdone.c       yield.c       getframe.c    pfhandler.c   regio.c         \
-    initpaging.c
+    initpaging.c  vcreate.c  
 
 SRC_CFILES   += ${SYSTEM_CFILES}
 SRC_SFILES   += ${SYSTEM_SFILES}
@@ -252,6 +252,8 @@ SRC_FULL    = ${SRC_CFULL} ${SRC_SFULL}
 #  Rules for files in directory ../system
 #------------------------------------------------------------------
 
+binaries/vcreate.o:          ../system/vcreate.c
+	${CC} ${CFLAGS} -o binaries/vcreate.o ../system/vcreate.c
 binaries/initpaging.o:         ../system/initpaging.c
 	${CC} ${CFLAGS} -o binaries/initpaging.o ../system/initpaging.c
 binaries/regio.o:         ../system/regio.c

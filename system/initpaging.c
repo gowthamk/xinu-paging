@@ -5,7 +5,39 @@
  *
  *------------------------------------------------------------------------
  */
+pd_t* nullpdir = NULL;
+pd_t* get_nullpdir() {
+    return nullpdir;
+}
+pd_t* initialize_paging2() {
+    pd_t* pdir = (pd_t*)getframe();
+    int i;
+    int n_pd_entries = NBPG / (sizeof(pd_t));
+    /* All page tables are writable */
+    for(i=0;i<n_pd_entries; i++) {
+        pdir[i].pd_write = 1;
+    }
+    /* First four page tables are global page tables */
+    i=0;
+    while(TRUE) {
+        /* ith page table is present in the memory */
+        pdir[i].pd_pres = 1;
+        pdir[i].pd_base = nullpdir[i].pd_base;
+        kprintf("%dth entry in page directory is 0x%05X\n",i,pdir[i].pd_base);
+        if (i<3) {
+            i = i+1;
+        } else if (i==3) {
+            i = 576;
+        } else if (i==576) {
+            break;
+        }
+    }
+    return pdir;
+}
 pd_t* initialize_paging() {
+    if (nullpdir != NULL) {
+        return initialize_paging2();
+    }
     pd_t* pdir = (pd_t*)getframe();
     pt_t* ptab;
     int i,j;
@@ -38,6 +70,7 @@ pd_t* initialize_paging() {
             break;
         }
     }
+    nullpdir = pdir;
     return pdir;
 }
 

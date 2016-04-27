@@ -54,6 +54,7 @@ typedef struct {
 #define MIN_ID          0
 
 /* in file initpaging.c */
+extern pd_t* get_nullpdir();
 extern pd_t* initialize_paging(void);
 extern void enable_paging(pd_t* pdir);
 
