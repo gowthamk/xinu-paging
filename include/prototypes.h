@@ -147,9 +147,6 @@ extern	pid32	getitem(pid32);
 /* in file getmem.c */
 extern	char	*getmem(uint32);
 
-/* in file getframe.c */
-extern	char *getframe(void);
-
 /* in file getpid.c */
 extern	pid32	getpid(void);
 

@@ -9,17 +9,19 @@ uint32 last_pfla;
  *------------------------------------------------------------------------
  */
 status fill_pt_entry(pt_t* pt_entry) {
-    uint32 newpg = (uint32)getframe();
+    uint32 newpg = (uint32)getframe(DEFAULT_FRAME);
     if((status) newpg == SYSERR) {
         return SYSERR;
     }
     /* Add new page's address to pt_entry */
     pt_entry->pt_pres = 1;
     pt_entry->pt_base = newpg >> 12;
+    /* increment reference count for current pt */
+    frame_ref_inc((uint32)pt_entry);
     return OK;
 }
 status fill_pd_entry(pd_t* pd_entry) {
-    pt_t* pt = (pt_t*)getframe();
+    pt_t* pt = (pt_t*)getframe(PT_FRAME);
     if((status) pt == SYSERR) {
         return SYSERR;
     }

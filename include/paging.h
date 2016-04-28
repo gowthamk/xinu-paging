@@ -57,3 +57,13 @@ typedef struct {
 extern pd_t* get_nullpdir();
 extern pd_t* initialize_paging(void);
 extern void enable_paging(pd_t* pdir);
+
+/* Structure for inverted page table entry */
+typedef struct {
+    unsigned int is_used: 1; /* Is this page free */
+    unsigned int is_pt: 1;
+    unsigned int ref : 30;
+    uint32 vbase;
+    pid32 pid;
+
+} ipt_t;

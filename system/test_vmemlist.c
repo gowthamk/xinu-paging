@@ -34,7 +34,8 @@ process test_vmemlist() {
 process test_vmem() {
     int* p1 = (int*)vgetmem(200);
     *p1 = 20;
-    kprintf("The value at 0x%08X is %d",p1,*p1);
+    kprintf("The value at 0x%08X is %d\n",p1,*p1);
+    print_ipt_stats();
     vfreemem((char*)p1,200);
     return OK;
 }

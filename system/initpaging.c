@@ -10,7 +10,7 @@ pd_t* get_nullpdir() {
     return nullpdir;
 }
 pd_t* initialize_paging2() {
-    pd_t* pdir = (pd_t*)getframe();
+    pd_t* pdir = (pd_t*)getframe(PD_FRAME);
     int i;
     int n_pd_entries = NBPG / (sizeof(pd_t));
     /* All page tables are writable */
@@ -38,7 +38,7 @@ pd_t* initialize_paging() {
     if (nullpdir != NULL) {
         return initialize_paging2();
     }
-    pd_t* pdir = (pd_t*)getframe();
+    pd_t* pdir = (pd_t*)getframe(PD_FRAME);
     pt_t* ptab;
     int i,j;
     int n_pd_entries = NBPG / (sizeof(pd_t));
@@ -50,7 +50,7 @@ pd_t* initialize_paging() {
     /* First four page tables are global page tables */
     i=0;
     while(TRUE) {
-        ptab = (pt_t*)getframe();
+        ptab = (pt_t*)getframe(GLOBAL_PT_FRAME);
         for(j=0; j<n_pt_entries; j++) {
             /* jth entry in ith page table is (i*2^10)+j*/
             ptab[j].pt_base = (i<<10)+j;
