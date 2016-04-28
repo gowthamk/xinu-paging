@@ -24,5 +24,17 @@ process test_vmemlist() {
     print_vmemlist(cur);
     vfreemem(p1+30,30);
     print_vmemlist(cur);
+    vfreemem(p1,10);
+    print_vmemlist(cur);
+    vfreemem(p1+10,10);
+    print_vmemlist(cur);
+    return OK;
+}
+
+process test_vmem() {
+    int* p1 = (int*)vgetmem(200);
+    *p1 = 20;
+    kprintf("The value at 0x%08X is %d",p1,*p1);
+    vfreemem((char*)p1,200);
     return OK;
 }

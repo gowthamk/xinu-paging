@@ -3,6 +3,7 @@
 #include <xinu.h>
 #include <stdio.h>
 extern process test_vmemlist(void);
+extern process test_vmem(void);
 process	main(void)
 {
 
@@ -17,7 +18,7 @@ process	main(void)
 	kprintf("\n...creating a shell\n");
 	recvclr();
     kprintf("PROCESS for vmemory test\n");
-    resume(vcreate(test_vmemlist, 8192, INITHEAP, 50, "test_vmemlist",0));
+    resume(vcreate(test_vmem, 8192, INITHEAP, 50, "test_vmemlist",0));
 	
     //resume(vcreate(shell, 8192, INITHEAP, 50, "shell", 1, CONSOLE));
 

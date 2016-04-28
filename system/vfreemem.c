@@ -19,6 +19,7 @@ syscall	vfreemem(
 	if ((nbytes == 0) || ((uint32) blkaddr < (uint32) vminheap)
 			  || ((uint32) blkaddr > (uint32) vmaxheap)) {
 		restore(mask);
+        kprintf("vfreemem returning SYSERR\n");
 		return SYSERR;
 	}
 
@@ -41,6 +42,7 @@ syscall	vfreemem(
 	if (((prev != vmemlist) && (uint32) blkaddr < top)
 	    || ((next != NULL)	&& (uint32) blkaddr+nbytes>(uint32)next->mbegin)) {
 		restore(mask);
+        kprintf("vfreemem returning SYSERR\n");
 		return SYSERR;
 	}
 

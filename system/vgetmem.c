@@ -17,6 +17,7 @@ char  	*vgetmem(
 	mask = disable();
 	if (nbytes == 0) {
 		restore(mask);
+        kprintf("vgetmem returning SYSERR\n");
 		return (char *)SYSERR;
 	}
 
@@ -32,17 +33,19 @@ char  	*vgetmem(
 			return (char *)(curr);
 
 		} else if (curr->mlength > nbytes) { /* Split big block	*/
+            char* thisfree = curr->mbegin;
             nextfree = curr->mbegin + nbytes;
             curr->mbegin = nextfree;
 			curr->mlength = curr->mlength - nbytes;
 			vmemlist->mlength -= nbytes;
 			restore(mask);
-			return (char *)(curr);
+			return thisfree;
 		} else {			/* Move to next block	*/
 			prev = curr;
 			curr = curr->mnext;
 		}
 	}
 	restore(mask);
+    kprintf("vgetmem returning SYSERR\n");
 	return (char *)SYSERR;
 }
