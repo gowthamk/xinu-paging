@@ -244,4 +244,14 @@ char *getframe(frame_t ft, uint32 vfno) {
     return frame;
 }
 
-
+status free_proc_frames(pid32 pid) {
+    int i;
+    for(i=0; i<NFRAMES; i++) {
+        if(ipt[i].pid == pid) {
+            ipt[i].is_used = 0;
+            ipt[i].is_pt = 0;
+            ipt[i].pid = 0;
+        }
+    }
+    return OK;
+}
