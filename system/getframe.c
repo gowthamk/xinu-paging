@@ -8,17 +8,15 @@ void print_ipt_stats() {
     int pts = 0, used = 0;
     int i;
     for (i=0; i<NFRAMES; i++) {
-        if (ipt[i].is_used == 1) {
-            used ++;
+        if(ipt[i].is_used == 0) {
+            continue;
         }
+        used ++;
         if (ipt[i].is_pt == 1) {
             pts++;
         }
-        if (ipt[i].is_pt == 1 && ipt[i].is_used == 0) {
-            kprintf("!! Frame %d is paging ds, but not being used!\n",i);
-        }
         if (ipt[i].is_pt == 1 && ipt[i].ref == 0) {
-            kprintf("!! Frame %d is paging ds, but its ref is zero!\n",i);
+            kprintf("!! Frame %d is paging ds under use, but its ref is zero!\n",i);
         }
     }
     kprintf("----------------------------------------------------\n");
@@ -81,22 +79,6 @@ status frame_ref_inc(uint32 addr) {
     return OK;
 }
 /*
- * Decrement the ref count of the frame that contains the given physical
- * address. If count is 0 and the frame is a pt frame, is_used is unset.
- */
-status frame_ref_dec(uint32 addr) {
-    if (addr < FRAME0*NBPG || addr >= (FRAME0 + NFRAMES) * NBPG) {
-        kprintf("frame_ref_inc: physical address is invalid!\n");
-        return SYSERR;
-    }
-    int i = (addr - (FRAME0*NBPG)) / NBPG;
-    ipt[i].ref--;
-    if(ipt[i].ref <= 0 && ipt[i].is_pt == 1) {
-        ipt[i].is_used = 0;
-    }
-    return OK;
-}
-/*
  * Given a pid and a virtual frame number, returns the corresponding physical
  * frame number, if one exists. Returns -1 otherwise.
  */
@@ -109,11 +91,21 @@ int ipt_lookup(pid32 pid,int vfno) {
     }
     return -1;
 }
+
 /*
- * Get the page table entry corresponing to the given vfno for the current
- * process.
+ * Evicts the frame #pfno. 
  */
-pt_t* pt_lookup(int vfno) {
+status evict_frame(uint32 pfno) {
+    if(pfno < 0 || pfno >= NFRAMES) {
+        kprintf("evict_frame: invalid pfno.\n");
+        return SYSERR;
+    }
+    kprintf("Physical frame # %d being evicted\n",pfno);
+    uint32 vfno = ipt[pfno].vfno;
+    /*
+     * Get the page table entry corresponing to the given vfno for the current
+     * process.
+     */
     uint32 vaddr = vaddr_of(vfno);
     int i = (vaddr & 0xFFC00000)>>22;
     int j = (vaddr & 0x003FF000)>>12;
@@ -128,20 +120,8 @@ pt_t* pt_lookup(int vfno) {
     if(pt_entry->pt_pres == 0) {
         kprintf("!!Warning: PT entry for evicting frame is not present!\n");
     }
-    return pt_entry;
-}
-/*
- * Evicts the frame #pfno. 
- */
-status evict_frame(uint32 pfno) {
-    if(pfno < 0 || pfno >= NFRAMES) {
-        kprintf("evict_frame: invalid pfno.\n");
-        return SYSERR;
-    }
-    kprintf("Physical frame # %d being evicted\n",pfno);
-    uint32 vfno = ipt[pfno].vfno;
+    
     /* Write to the backing store */
-    pt_t* pt_entry = pt_lookup(vfno);
     char* src = (char*)(pt_entry->pt_base << 12);
     if(src==NULL){
         return SYSERR;
@@ -163,14 +143,24 @@ status evict_frame(uint32 pfno) {
         kprintf("OK\n");
     }
 
+    /* Set ipt entry of pfno as not used */
+    ipt[pfno].is_used = 0;
+
     /* Set page table entry referring to pfno as not present*/
     pt_entry->pt_pres = 0;
 
-    /* Decrement ref count of pt frame.*/
-    frame_ref_dec((uint32) pt_entry);
+    /* Decrement ref count of pt frame. If ref count reaches zero, 
+     * mark the frame as free, and set page dir entry referring to this page
+     * table as not present. */
+    uint32 addr = (uint32) pt_entry;
+    int ptpfno = (addr - (FRAME0*NBPG)) / NBPG;
+    ipt[ptpfno].ref--;
+    if(ipt[ptpfno].ref <= 0 && ipt[ptpfno].is_pt == 1) {
+        pd_entry->pd_pres = 0;
+        ipt[ptpfno].is_used = 0;
+        ipt[ptpfno].is_pt = 0;
+    }
 
-    /* Set ipt entry of pfno as not used */
-    ipt[pfno].is_used = 0;
     return OK;
 }
 /*
@@ -237,7 +227,7 @@ char *getframe(frame_t ft, uint32 vfno) {
     ipt[i].timestamp = get_logiclk_time();
     char* frame = (char *) ((FRAME0 + i)*NBPG);
     memset(frame,0x00,NBPG);
-    //kprintf("getframe returning 0x%08X\n",frame);
+    kprintf("getframe returning 0x%08X\n",frame);
     //print_ipt_stats();
 	restore(mask);
     return frame;
