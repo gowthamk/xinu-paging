@@ -38,5 +38,8 @@ process test_vmem() {
     print_ipt_stats();
     vfreemem((char*)p1,200);
     evict_frame(vframe_of(p1));
+    p1 = (int*)vgetmem(100);
+    kprintf("The value at 0x%08X is %d\n",p1,*p1);
+    kprintf("The value at 0x01000000 is %d\n",*((int*)0x01000000));
     return OK;
 }

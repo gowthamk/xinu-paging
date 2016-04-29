@@ -9,13 +9,32 @@ uint32 pfla, last_pfla = 0;
  *------------------------------------------------------------------------
  */
 status fill_pt_entry(pt_t* pt_entry) {
-    uint32 newpg = (uint32)getframe(DEFAULT_FRAME,vframe_of(pfla));
+    int vfno = vframe_of(pfla);
+    char* newpg = getframe(DEFAULT_FRAME,vfno);
     if((status) newpg == SYSERR) {
         return SYSERR;
     }
+    /* Copy virtual frame from bs, if one exists */
+    bsd_t bs = proctab[currpid].prbs;
+    if(bs == -1) {
+        kprintf("Invalid backing store for pid %d.\n",currpid);
+        return SYSERR;
+    }
+    int retries = 4, status;
+    kprintf("Reading vfno %d from bs... ",vfno);
+    while((status = read_bs(newpg,bs,vfno)) != OK  && retries > 0) {
+        retries --;
+    }
+    if(status != OK) {
+        kprintf("FAILED!\n");
+        /* Alas, life has to move on. */
+    } else {
+        kprintf("OK\n");
+    }
+
     /* Add new page's address to pt_entry */
     pt_entry->pt_pres = 1;
-    pt_entry->pt_base = newpg >> 12;
+    pt_entry->pt_base = (uint32) newpg >> 12;
     /* increment reference count for current pt */
     frame_ref_inc((uint32)pt_entry);
     return OK;
@@ -57,10 +76,12 @@ void pfhandler() {
     pfla = (uint32) read_cr2();
     kprintf("Page fault handler is called with errcode: %d\n",pferrcode);
     kprintf("PFLA is 0x%08X\n",pfla);
+    /*
     if(pfla == last_pfla) {
         kprintf("Something's wrong\n");
         while(TRUE);
     }
+    */
     mapvaddr(pfla);
     last_pfla = pfla;
     return;
