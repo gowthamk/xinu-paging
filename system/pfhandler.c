@@ -81,16 +81,29 @@ status mapvaddr(uint32 vaddr) {
     asm("popl %eax");
     return OK;
 }
+bool8 is_valid_vaddr(uint32 vaddr) {
+    if(vaddr < VFRAME0 * NBPG || vaddr >= 0x90000000) {
+        return FALSE;
+    }
+    struct vmemblk* vl = (proctab[currpid].prvmemlist)->mnext;
+    while(vl != NULL) {
+        if((uint32) vl->mbegin > vaddr) {
+            return TRUE;
+        } 
+        vl = vl->mnext;
+    }
+    return FALSE;
+}
 void pfhandler() {
     pfla = (uint32) read_cr2();
     kprintf("Page fault handler is called with errcode: %d\n",pferrcode);
     kprintf("PFLA is 0x%08X\n",pfla);
-    /*
-    if(pfla == last_pfla) {
-        kprintf("Something's wrong\n");
-        while(TRUE);
+    if(!is_valid_vaddr(pfla)) {
+        kprintf("Invalid memory access on address 0x%08X\n",pfla);
+        kprintf("Killing the process\n");
+        kill(currpid);
+        return;
     }
-    */
     mapvaddr(pfla);
     last_pfla = pfla;
     return;

@@ -178,6 +178,14 @@ status evict_vframe(uint32 vfno) {
  *  getframe -  Allocate a frame of type ft, map (currpid,vfno) to physical
  *  frame number in ipt if ft=DEFAULT_FRAME, and returning the physical frame
  *  adrress.
+ *  Note: getframe may evict a frame, if necessary. This in itself is not a
+ *  problem; page fault handler can get the frame back into memory. However, if
+ *  the evicting frame is the last the frame pointed by its page table, then
+ *  getframe deallocates (not evicts) the page table: it marks it as not used,
+ *  and sets its pd entry as not present. This is safe as long as the page table
+ *  has no external references. If there are external references to the page
+ *  table, then the ref count of the page table has to be incremented to ensure
+ *  that the page table is not deallocated.
  *------------------------------------------------------------------------
  */
 char *getframe(frame_t ft, uint32 vfno) {
