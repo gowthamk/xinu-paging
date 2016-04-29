@@ -20,6 +20,7 @@ typedef byte frame_t;
 
 /* Virtual frame number of given virtual address */
 #define vframe_of(vaddr) (((uint32) vaddr >> 12) - (FRAME0 + NFRAMES))
+#define vaddr_of(vfno) ((vfno + FRAME0 + NFRAMES)<<12)
 
 /* in file getframe.c */
 extern	char *getframe(frame_t,uint32);
