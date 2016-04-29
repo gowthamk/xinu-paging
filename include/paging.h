@@ -49,6 +49,7 @@ typedef struct {
 
 #define FIFO 3
 #define MYPOLICY 4
+#define PG_REPLACEMENT_POLICY FIFO
 
 #define MAX_ID		7		/* You get 8 mappings, 0 - 7 */
 #define MIN_ID          0
@@ -65,5 +66,5 @@ typedef struct {
     unsigned int ref : 30;
     uint32 vfno;
     pid32 pid;
-
+    uint32 timestamp;
 } ipt_t;

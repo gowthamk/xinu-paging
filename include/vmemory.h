@@ -4,7 +4,9 @@ struct	vmemblk	{			/* See roundmb & truncmb	*/
 	uint32	mlength;		/* Size of blk (includes memblk)*/
     char*   mbegin;         /* The beginning virtual address of this blk */
 	};
+/* Beginning frame of virtual address */
 #define VFRAME0 (FRAME0 + NFRAMES)
+//#define VFRAME0 4096
 extern char *vminheap;
 extern char *vmaxheap;
 extern struct vmemblk* vmeminit(uint32);

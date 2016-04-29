@@ -41,5 +41,7 @@ process test_vmem() {
     p1 = (int*)vgetmem(100);
     kprintf("The value at 0x%08X is %d\n",p1,*p1);
     kprintf("The value at 0x01000000 is %d\n",*((int*)0x01000000));
+    int* p2 = (int*) ((uint32)p1 + NBPG);
+    kprintf("The value at 0x%08X is %d\n",p2,*p2);
     return OK;
 }

@@ -28,63 +28,45 @@ void print_ipt_stats() {
     return;
 }
 
-/*------------------------------------------------------------------------
- *  getframe -  Allocate a frame of type ft, map (currpid,vfno) to physical
- *  frame number in ipt if ft=DEFAULT_FRAME, and returning the physical frame
- *  adrress.
- *------------------------------------------------------------------------
+/*
+ * Logical clock time. Ticks everytime it is observed.
  */
-char *getframe(frame_t ft, uint32 vfno) {
-	intmask mask = disable();
-    int i;
+uint32 logiclk = 0;
+uint32 get_logiclk_time() {
+    return logiclk++;
+}
+/*
+ * Finds a page to evict using FIFO replacement policy.
+ */
+int find_evictable_fifo() {
+    int i, fst=-1, min = get_logiclk_time();
     for(i=0; i<NFRAMES; i++) {
-        if(!ipt[i].is_used) {
-            break;
+        if(ipt[i].is_pt && ipt[i].ref > 0) {
+            continue;
+        }
+        if(ipt[i].is_used == 0) {
+            kprintf("Unused frame found during eviction!\n");
+            return i;
+        }
+        if(ipt[i].timestamp < min) {
+            min = ipt[i].timestamp;
+            fst = i;
         }
     }
-    if(i == -1) {
-        kprintf("Eviction Unimpl.\n");
-    }
-    uint32 invalid_vfno = 0xFFFFFFFF;
-    switch (ft) {
-        case PT_FRAME:
-        ipt[i].is_pt = 1;
-        ipt[i].ref = 0;
-        ipt[i].vfno = invalid_vfno;
-        break;
-
-        case PD_FRAME:
-        ipt[i].is_pt = 1;
-        ipt[i].ref = 100; /* some non-zero value */
-        ipt[i].vfno = invalid_vfno;
-        break;
-
-        case GLOBAL_PT_FRAME:
-        ipt[i].is_pt = 1;
-        ipt[i].ref = 1024;
-        ipt[i].vfno = invalid_vfno;
-        break;
-
-        case DEFAULT_FRAME:
-        ipt[i].is_pt = 0;
-        ipt[i].vfno = vfno;
-        kprintf("IPT map: (pid(%d),vfno(%d)) --> pfno(%d)\n",currpid,vfno,i);
-        break;
-
-        default:
-        kprintf("getframe: invalid frame type\n");
-        return (char*)SYSERR;
-    }
-    ipt[i].is_used = 1;
-    ipt[i].pid = currpid;
-    char* frame = (char *) ((FRAME0 + i)*NBPG);
-    memset(frame,0x00,NBPG);
-    //kprintf("getframe returning 0x%08X\n",frame);
-    //print_ipt_stats();
-	restore(mask);
-    return frame;
+    return fst;
 }
-
+/*
+ * Finds a page to evict using the current replacement policy.
+ */
+int find_evictable() {
+    if(PG_REPLACEMENT_POLICY == FIFO) {
+        return find_evictable_fifo();
+    } else {
+        kprintf("Only FIFO replacement is implemented\n");
+        return -1;
+    }
+    return -1;
+}
 /*
  * Increment the ref count of the frame that contains the given physical
  * address.
@@ -100,7 +82,7 @@ status frame_ref_inc(uint32 addr) {
 }
 /*
  * Decrement the ref count of the frame that contains the given physical
- * address.
+ * address. If count is 0 and the frame is a pt frame, is_used is unset.
  */
 status frame_ref_dec(uint32 addr) {
     if (addr<FRAME0 || addr >= FRAME0 + (NFRAMES * NBPG)) {
@@ -109,6 +91,9 @@ status frame_ref_dec(uint32 addr) {
     }
     int i = (addr - (FRAME0*NBPG)) / NBPG;
     ipt[i].ref--;
+    if(ipt[i].ref <= 0 && ipt[i].is_pt == 1) {
+        ipt[i].is_used = 0;
+    }
     return OK;
 }
 /*
@@ -146,14 +131,15 @@ pt_t* pt_lookup(int vfno) {
     return pt_entry;
 }
 /*
- * Evicts the vframe #vfno of the current process. The corresponding physical
- * frame is marked not used. 
+ * Evicts the frame #pfno. 
  */
-status evict_frame(uint32 vfno) {
-    int pfno = ipt_lookup(currpid,vfno);
-    kprintf("Frame number %d of current process being evicted\n",vfno);
-    kprintf("Physical frame is %d\n",pfno);
-
+status evict_frame(uint32 pfno) {
+    if(pfno < 0 || pfno >= NFRAMES) {
+        kprintf("evict_frame: invalid pfno.\n");
+        return SYSERR;
+    }
+    kprintf("Physical frame # %d being evicted\n",pfno);
+    uint32 vfno = ipt[pfno].vfno;
     /* Write to the backing store */
     pt_t* pt_entry = pt_lookup(vfno);
     char* src = (char*)(pt_entry->pt_base << 12);
@@ -177,11 +163,84 @@ status evict_frame(uint32 vfno) {
         kprintf("OK\n");
     }
 
-    /* Set page table entry of vfno as not present*/
+    /* Set page table entry referring to pfno as not present*/
     pt_entry->pt_pres = 0;
+
+    /* Decrement ref count of pt frame.*/
     frame_ref_dec((uint32) pt_entry);
 
     /* Set ipt entry of pfno as not used */
     ipt[pfno].is_used = 0;
     return OK;
 }
+/*
+ * Evicts the vframe #vfno of the current process. Calls evict_frame.
+ */
+status evict_vframe(uint32 vfno) {
+    int pfno = ipt_lookup(currpid,vfno);
+    kprintf("Frame number %d of current process being evicted\n",vfno);
+    return evict_frame((uint32) pfno);
+}
+/*------------------------------------------------------------------------
+ *  getframe -  Allocate a frame of type ft, map (currpid,vfno) to physical
+ *  frame number in ipt if ft=DEFAULT_FRAME, and returning the physical frame
+ *  adrress.
+ *------------------------------------------------------------------------
+ */
+char *getframe(frame_t ft, uint32 vfno) {
+	intmask mask = disable();
+    int i;
+    for(i=0; i<NFRAMES; i++) {
+        if(!ipt[i].is_used) {
+            break;
+        }
+    }
+    if(i >= NFRAMES) {
+        i = find_evictable();
+        if(evict_frame(i) != OK) {
+            kprintf("getframe: No free frames. Could not evict frames\n");
+            return NULL;
+        }
+    }
+    uint32 invalid_vfno = 0xFFFFFFFF;
+    switch (ft) {
+        case PT_FRAME:
+        ipt[i].is_pt = 1;
+        ipt[i].ref = 0;
+        ipt[i].vfno = invalid_vfno;
+        break;
+
+        case PD_FRAME:
+        ipt[i].is_pt = 1;
+        ipt[i].ref = 1024; /* Some non-zero value. Never decremented */
+        ipt[i].vfno = invalid_vfno;
+        break;
+
+        case GLOBAL_PT_FRAME:
+        ipt[i].is_pt = 1;
+        ipt[i].ref = 1024; /* Some non-zero value. Never decremented */
+        ipt[i].vfno = invalid_vfno;
+        break;
+
+        case DEFAULT_FRAME:
+        ipt[i].is_pt = 0;
+        ipt[i].vfno = vfno;
+        kprintf("IPT map: (pid(%d),vfno(%d)) --> pfno(%d)\n",currpid,vfno,i);
+        break;
+
+        default:
+        kprintf("getframe: invalid frame type\n");
+        return (char*)SYSERR;
+    }
+    ipt[i].is_used = 1;
+    ipt[i].pid = currpid;
+    ipt[i].timestamp = get_logiclk_time();
+    char* frame = (char *) ((FRAME0 + i)*NBPG);
+    memset(frame,0x00,NBPG);
+    //kprintf("getframe returning 0x%08X\n",frame);
+    //print_ipt_stats();
+	restore(mask);
+    return frame;
+}
+
+
