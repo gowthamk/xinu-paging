@@ -55,7 +55,8 @@ struct procent {		/* Entry in the process table		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
     void*   prpdir;     /* Process's page directory */
     uint32  prhsize;    /* Process's heap size */
-    struct vmemblk* prvmemlist; /* Process's free virtual memory */
+    struct  vmemblk* prvmemlist; /* Process's free virtual memory */
+    bsd_t   prbs;       /* Process's backing store */
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/

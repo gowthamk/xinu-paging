@@ -2,10 +2,6 @@
 
 #include <xinu.h>
 
-/*------------------------------------------------------------------------
- *  getframe -  Allocate a frame, returning lowest word address
- *------------------------------------------------------------------------
- */
 ipt_t ipt[NFRAMES];
 
 void print_ipt_stats() {
@@ -32,6 +28,10 @@ void print_ipt_stats() {
     return;
 }
 
+/*------------------------------------------------------------------------
+ *  getframe -  Allocate a frame, returning lowest word address
+ *------------------------------------------------------------------------
+ */
 char *getframe(frame_t ft) {
 	intmask mask = disable();
     int i;

@@ -43,7 +43,18 @@ pid32	vcreate(
     pd_t* pdir = initialize_paging();
 
     /* Initialize virtual memory data structures */
-    struct memblk* vmemlist = vmeminit(hsize);
+    struct vmemblk* vmemlist = vmeminit(hsize);
+
+    /* Initialize backing store for this process */
+    int retries = 4;
+    bsd_t bs = (bsd_t) -1;
+    while(bs == -1 && retries > 0) {
+        bs = open_bs(allocate_bs(hsize));
+        retries --;
+    }
+    if(bs == -1) {
+        kprintf("!!Warning: could not allocate and open a backing store for pid %d. ",pid);
+    }
 
 	prcount++;
 	prptr = &proctab[pid];
@@ -56,6 +67,7 @@ pid32	vcreate(
     prptr->prpdir = (void*)pdir;
     prptr->prhsize = hsize;
     prptr->prvmemlist = vmemlist;
+    prptr->prbs = bs;
 	prptr->prname[PNMLEN-1] = NULLCH;
 	for (i=0 ; i<PNMLEN-1 && (prptr->prname[i]=name[i])!=NULLCH; i++)
 		;

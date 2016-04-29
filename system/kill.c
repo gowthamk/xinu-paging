@@ -54,6 +54,20 @@ syscall	kill(
 		prptr->prstate = PR_FREE;
 	}
 
+    /* If backing store was allocated, close and deallocate it */
+    int retries = 4;
+    bsd_t bs = (bsd_t) -1;
+    if(prptr->prbs == -1) {
+        bs = 0;
+    }
+    while(bs == -1 && retries > 0) {
+        bs = deallocate_bs(close_bs(prptr->prbs));
+        retries --;
+    }
+    if(bs == -1) {
+        kprintf("!!Warning: could not close and deallocate the backing store of pid %d. ",pid);
+    }
+
 	restore(mask);
 	return OK;
 }
