@@ -5,8 +5,8 @@ struct	vmemblk	{			/* See roundmb & truncmb	*/
     char*   mbegin;         /* The beginning virtual address of this blk */
 	};
 /* Beginning frame of virtual address */
-#define VFRAME0 (FRAME0 + NFRAMES)
-//#define VFRAME0 4096
+//#define VFRAME0 (FRAME0 + NFRAMES)
+#define VFRAME0 4096
 extern char *vminheap;
 extern char *vmaxheap;
 extern struct vmemblk* vmeminit(uint32);
@@ -21,8 +21,8 @@ typedef byte frame_t;
 #define DEFAULT_FRAME 4
 
 /* Virtual frame number of given virtual address */
-#define vframe_of(vaddr) (((uint32) vaddr >> 12) - (FRAME0 + NFRAMES))
-#define vaddr_of(vfno) ((vfno + FRAME0 + NFRAMES)<<12)
+#define vframe_of(vaddr) (((uint32) vaddr >> 12) - VFRAME0)
+#define vaddr_of(vfno) ((vfno + VFRAME0)<<12)
 
 /* in file getframe.c */
 extern	char *getframe(frame_t,uint32);

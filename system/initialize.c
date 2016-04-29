@@ -59,6 +59,7 @@ void	nulluser()
 	
 	/* Initialize the system */
 		
+    //kprintf("About to call sysinit from nulluser\n");
 	sysinit();
 
     /* Initialize paging for null process */
@@ -210,6 +211,8 @@ static	void	sysinit()
 
         PAGE_SERVER_STATUS = PAGE_SERVER_INACTIVE;
         bs_init_sem = semcreate(1);
+
+    //kprintf("About to install PF handler\n");
 
     /* Install page fault handler */
     set_evec(14, (uint32) pfisr);

@@ -72,7 +72,7 @@ int find_evictable() {
  * address.
  */
 status frame_ref_inc(uint32 addr) {
-    if (addr<FRAME0 || addr >= FRAME0 + (NFRAMES * NBPG)) {
+    if (addr < FRAME0*NBPG || addr >= (FRAME0 + NFRAMES) * NBPG) {
         kprintf("frame_ref_inc: physical address is invalid!\n");
         return SYSERR;
     }
@@ -85,7 +85,7 @@ status frame_ref_inc(uint32 addr) {
  * address. If count is 0 and the frame is a pt frame, is_used is unset.
  */
 status frame_ref_dec(uint32 addr) {
-    if (addr<FRAME0 || addr >= FRAME0 + (NFRAMES * NBPG)) {
+    if (addr < FRAME0*NBPG || addr >= (FRAME0 + NFRAMES) * NBPG) {
         kprintf("frame_ref_inc: physical address is invalid!\n");
         return SYSERR;
     }
