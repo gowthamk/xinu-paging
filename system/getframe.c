@@ -118,12 +118,14 @@ status evict_frame(uint32 pfno) {
     pt_t* pt = (pt_t*)(pd_entry->pd_base << 12);
     pt_t* pt_entry = &pt[j];
     if(pt_entry->pt_pres == 0) {
-        kprintf("!!Warning: PT entry for evicting frame is not present!\n");
+        kprintf("!!Warning: PT entry (0x%08X) for evicting frame is not present!\n", pt_entry);
+        kprintf("0x%08X contains 0x%08X\n",pt_entry,*pt_entry);
     }
     
     /* Write to the backing store */
     char* src = (char*)(pt_entry->pt_base << 12);
     if(src==NULL){
+        kprintf("pt_entry->pt_base is null!\n");
         return SYSERR;
     }
     bsd_t bs = proctab[currpid].prbs;
@@ -156,6 +158,7 @@ status evict_frame(uint32 pfno) {
     int ptpfno = (addr - (FRAME0*NBPG)) / NBPG;
     ipt[ptpfno].ref--;
     if(ipt[ptpfno].ref <= 0 && ipt[ptpfno].is_pt == 1) {
+        kprintf("Freeing a PT frame\n");
         pd_entry->pd_pres = 0;
         ipt[ptpfno].is_used = 0;
         ipt[ptpfno].is_pt = 0;

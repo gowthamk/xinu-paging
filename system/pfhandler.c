@@ -9,7 +9,12 @@ uint32 pfla, last_pfla = 0;
  *------------------------------------------------------------------------
  */
 status fill_pt_entry(pt_t* pt_entry) {
+    /* NOTE: It is important to increment reference count before calling
+     * getframe. Otherwise, if getframe evicts a frame, it may free up the
+     * current page table!*/
+    frame_ref_inc((uint32)pt_entry);
     int vfno = vframe_of(pfla);
+    /* increment reference count for current pt */
     char* newpg = getframe(DEFAULT_FRAME,vfno);
     if((status) newpg == SYSERR) {
         return SYSERR;
@@ -35,8 +40,7 @@ status fill_pt_entry(pt_t* pt_entry) {
     /* Add new page's address to pt_entry */
     pt_entry->pt_pres = 1;
     pt_entry->pt_base = (uint32) newpg >> 12;
-    /* increment reference count for current pt */
-    frame_ref_inc((uint32)pt_entry);
+    //kprintf("fill_pt_entry filled pt_entry at 0x%08X as 0x%08X\n",pt_entry,*pt_entry);
     return OK;
 }
 status fill_pd_entry(pd_t* pd_entry) {
@@ -70,6 +74,11 @@ status mapvaddr(uint32 vaddr) {
         && fill_pt_entry(pt_entry) == SYSERR) {
         return SYSERR;
     }
+    /* Invalidate TLB for this vaddr */
+    asm("pushl %eax");
+    asm("movl pfla, %eax");        
+    asm("invlpg pfla");
+    asm("popl %eax");
     return OK;
 }
 void pfhandler() {
