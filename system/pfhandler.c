@@ -3,13 +3,13 @@
 #include<xinu.h>
 long pferrcode;
 extern char* pf_test_ptr;
-uint32 last_pfla;
+uint32 pfla, last_pfla = 0;
 /*------------------------------------------------------------------------
  * pfhandler - high level page fault handler
  *------------------------------------------------------------------------
  */
 status fill_pt_entry(pt_t* pt_entry) {
-    uint32 newpg = (uint32)getframe(DEFAULT_FRAME);
+    uint32 newpg = (uint32)getframe(DEFAULT_FRAME,vframe_of(pfla));
     if((status) newpg == SYSERR) {
         return SYSERR;
     }
@@ -21,7 +21,7 @@ status fill_pt_entry(pt_t* pt_entry) {
     return OK;
 }
 status fill_pd_entry(pd_t* pd_entry) {
-    pt_t* pt = (pt_t*)getframe(PT_FRAME);
+    pt_t* pt = (pt_t*)getframe(PT_FRAME,0);
     if((status) pt == SYSERR) {
         return SYSERR;
     }
@@ -54,7 +54,7 @@ status mapvaddr(uint32 vaddr) {
     return OK;
 }
 void pfhandler() {
-    uint32 pfla = (uint32) read_cr2();
+    pfla = (uint32) read_cr2();
     kprintf("Page fault handler is called with errcode: %d\n",pferrcode);
     kprintf("PFLA is 0x%08X\n",pfla);
     if(pfla == last_pfla) {

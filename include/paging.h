@@ -63,7 +63,7 @@ typedef struct {
     unsigned int is_used: 1; /* Is this page free */
     unsigned int is_pt: 1;
     unsigned int ref : 30;
-    uint32 vbase;
+    uint32 vfno;
     pid32 pid;
 
 } ipt_t;

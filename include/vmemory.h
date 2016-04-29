@@ -18,8 +18,12 @@ typedef byte frame_t;
 #define GLOBAL_PT_FRAME 3
 #define DEFAULT_FRAME 4
 
+/* Virtual frame number of given virtual address */
+#define vframe_of(vaddr) (((uint32) vaddr >> 12) - (FRAME0 + NFRAMES))
+
 /* in file getframe.c */
-extern	char *getframe(frame_t);
+extern	char *getframe(frame_t,uint32);
 extern status frame_ref_inc(uint32);
 extern void print_ipt_stats();
+extern status evict_frame(uint32);
 
