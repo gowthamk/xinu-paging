@@ -28,5 +28,5 @@ typedef byte frame_t;
 extern	char *getframe(frame_t,uint32);
 extern status frame_ref_inc(uint32);
 extern void print_ipt_stats();
-extern status evict_frame(uint32);
+extern status evict_vframe(uint32);
 
