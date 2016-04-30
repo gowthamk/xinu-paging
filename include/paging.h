@@ -42,7 +42,7 @@ typedef struct {
 
 #define NBPG		4096	/* number of bytes per page	*/
 #define FRAME0		1024	/* zero-th frame		*/
-#define NFRAMES		18	/* number of frames		*/
+#define NFRAMES		10	/* number of frames		*/
 
 #define MAP_SHARED 1
 #define MAP_PRIVATE 2
@@ -56,7 +56,7 @@ typedef struct {
 
 /* in file initpaging.c */
 extern pd_t* get_nullpdir();
-extern pd_t* initialize_paging(void);
+extern pd_t* initialize_paging(pid32);
 extern void enable_paging(pd_t* pdir);
 
 /* Structure for inverted page table entry */

@@ -20,6 +20,35 @@ syscall	kill(
 		restore(mask);
 		return SYSERR;
 	}
+    /*
+     * Virtual memory-related cleanup section.
+     */
+    /* If backing store was allocated, close and deallocate it */
+    int retries = 4;
+    bsd_t bs = (bsd_t) -1;
+    if(prptr->prbs == -1) {
+        bs = 0;
+    }
+    while(bs == -1 && retries > 0) {
+        bs = deallocate_bs(close_bs(prptr->prbs));
+        retries --;
+    }
+    if(bs == -1) {
+        kprintf("!!Warning: could not close and deallocate the backing store of pid %d. ",pid);
+    }
+
+    /* Deallocate all physical frames that the current process holds */
+    free_proc_frames(pid);
+
+    /* Free virtual memory free list */
+    struct vmemblk *next, *cur = prptr->prvmemlist;
+    while(cur!=NULL) {
+        next = cur->mnext;
+        freemem((char*)cur, sizeof(struct vmemblk));
+        cur = next;
+    }
+
+
 
 	if (--prcount <= 1) {		/* Last user process completes	*/
 		xdone();
@@ -53,34 +82,6 @@ syscall	kill(
 	default:
 		prptr->prstate = PR_FREE;
 	}
-
-    /*
-     * Virtual memory-related cleanup section.
-     */
-    /* If backing store was allocated, close and deallocate it */
-    int retries = 4;
-    bsd_t bs = (bsd_t) -1;
-    if(prptr->prbs == -1) {
-        bs = 0;
-    }
-    while(bs == -1 && retries > 0) {
-        bs = deallocate_bs(close_bs(prptr->prbs));
-        retries --;
-    }
-    if(bs == -1) {
-        kprintf("!!Warning: could not close and deallocate the backing store of pid %d. ",pid);
-    }
-
-    /* Deallocate all physical frames that the current process holds */
-    free_proc_frames(pid);
-
-    /* Free virtual memory free list */
-    struct vmemblk *next, *cur = prptr->prvmemlist;
-    while(cur!=NULL) {
-        next = cur->mnext;
-        freemem((char*)cur, sizeof(struct vmemblk));
-        cur = next;
-    }
 
 	restore(mask);
 	return OK;

@@ -40,7 +40,7 @@ pid32	vcreate(
 	}
 
     /* Initialize paging for this process */
-    pd_t* pdir = initialize_paging();
+    pd_t* pdir = initialize_paging(pid);
 
     /* Initialize virtual memory data structures */
     struct vmemblk* vmemlist = vmeminit(hsize);
@@ -55,6 +55,7 @@ pid32	vcreate(
     if(bs == -1) {
         kprintf("!!Warning: could not allocate and open a backing store for pid %d. ",pid);
     }
+    kprintf("[Pid %d] bs = %d\n",pid,bs);
 
 	prcount++;
 	prptr = &proctab[pid];

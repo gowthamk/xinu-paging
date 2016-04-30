@@ -15,8 +15,11 @@ status fill_pt_entry(pt_t* pt_entry) {
     frame_ref_inc((uint32)pt_entry);
     int vfno = vframe_of(pfla);
     /* increment reference count for current pt */
-    char* newpg = getframe(DEFAULT_FRAME,vfno);
-    if((status) newpg == SYSERR) {
+    char* newpg = getframe(DEFAULT_FRAME,currpid,vfno);
+    if(newpg == NULL) {
+        kprintf("Insufficient Memory!\n");
+        kprintf("Killing pid %d.\n",currpid);
+        kill(currpid);
         return SYSERR;
     }
     /* Copy virtual frame from bs, if one exists */
@@ -26,15 +29,15 @@ status fill_pt_entry(pt_t* pt_entry) {
         return SYSERR;
     }
     int retries = 4, status;
-    kprintf("Reading vfno %d from bs... ",vfno);
+    //kprintf("Reading vfno %d from bs... ",vfno);
     while((status = read_bs(newpg,bs,vfno)) != OK  && retries > 0) {
         retries --;
     }
     if(status != OK) {
-        kprintf("FAILED!\n");
+        //kprintf("FAILED!\n");
         /* Alas, life has to move on. */
     } else {
-        kprintf("OK\n");
+        //kprintf("OK\n");
     }
 
     /* Add new page's address to pt_entry */
@@ -44,8 +47,11 @@ status fill_pt_entry(pt_t* pt_entry) {
     return OK;
 }
 status fill_pd_entry(pd_t* pd_entry) {
-    pt_t* pt = (pt_t*)getframe(PT_FRAME,0);
-    if((status) pt == SYSERR) {
+    pt_t* pt = (pt_t*)getframe(PT_FRAME,currpid,0);
+    if(pt == NULL) {
+        kprintf("Insufficient Memory!\n");
+        kprintf("Killing the process.\n");
+        kill(currpid);
         return SYSERR;
     }
     int j, n_pt_entries = NBPG / (sizeof(pt_t));
@@ -96,7 +102,7 @@ bool8 is_valid_vaddr(uint32 vaddr) {
 }
 void pfhandler() {
     pfla = (uint32) read_cr2();
-    kprintf("Page fault handler is called with errcode: %d\n",pferrcode);
+    //kprintf("Page fault handler is called with errcode: %d\n",pferrcode);
     kprintf("PFLA is 0x%08X\n",pfla);
     if(!is_valid_vaddr(pfla)) {
         kprintf("Invalid memory access on address 0x%08X\n",pfla);
@@ -105,6 +111,5 @@ void pfhandler() {
         return;
     }
     mapvaddr(pfla);
-    last_pfla = pfla;
     return;
 }

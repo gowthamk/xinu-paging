@@ -3,7 +3,9 @@
 #include <xinu.h>
 #include <stdio.h>
 extern process test_vmemlist(void);
-extern process test_vmem(void);
+extern process test_vmem_1(void);
+extern process test_vmem_2(void);
+extern void test_vmem_3(void);
 process	main(void)
 {
 
@@ -18,7 +20,11 @@ process	main(void)
 	kprintf("\n...creating a shell\n");
 	recvclr();
     kprintf("PROCESSES for vmemory test\n");
-    resume(vcreate(test_vmem, 8192, INITHEAP, 50, "test_vmemlist1",0));
+    resume(vcreate(test_vmem_1, 8192, INITHEAP, 50, "test1",0));
+    //  sleep(2);
+    //  resume(vcreate(test_vmem_2, 8192, INITHEAP, 50, "test2",0));
+    sleep(2);
+    test_vmem_3();
 
     //resume(vcreate(test_vmem, 8192, INITHEAP, 50, "test_vmemlist2",0));
 	

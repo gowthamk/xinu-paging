@@ -25,7 +25,7 @@ typedef byte frame_t;
 #define vaddr_of(vfno) ((vfno + VFRAME0)<<12)
 
 /* in file getframe.c */
-extern	char *getframe(frame_t,uint32);
+extern	char *getframe(frame_t,pid32,uint32);
 extern status frame_ref_inc(uint32);
 extern void print_ipt_stats();
 extern status evict_vframe(uint32);

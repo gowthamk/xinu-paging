@@ -63,7 +63,7 @@ void	nulluser()
 	sysinit();
 
     /* Initialize paging for null process */
-    pd_t* pdir = initialize_paging();
+    pd_t* pdir = initialize_paging(NULLPROC);
 
     /* enable paging */
     enable_paging(pdir);
