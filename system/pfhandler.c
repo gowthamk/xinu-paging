@@ -103,7 +103,8 @@ bool8 is_valid_vaddr(uint32 vaddr) {
 void pfhandler() {
     pfla = (uint32) read_cr2();
     //kprintf("Page fault handler is called with errcode: %d\n",pferrcode);
-    kprintf("PFLA is 0x%08X\n",pfla);
+    //kprintf("PFLA is 0x%08X\n",pfla);
+    hook_pfault(pfla);
     if(!is_valid_vaddr(pfla)) {
         kprintf("Invalid memory access on address 0x%08X\n",pfla);
         kprintf("Killing the process\n");

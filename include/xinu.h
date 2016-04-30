@@ -43,3 +43,8 @@
 #include <paging.h>
 #include <vmemory.h>
 #include <page_server.h>
+#include <hooks.h>
+
+#ifndef debug_print
+#define debug_print kprintf //dont_print 
+#endif

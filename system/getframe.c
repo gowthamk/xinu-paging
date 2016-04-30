@@ -127,7 +127,6 @@ status evict_frame(uint32 pfno) {
     pt_t* pt_entry = &pt[j];
     if(pt_entry->pt_pres == 0) {
         kprintf("!!Warning: PT entry (0x%08X) for evicting frame is not present!\n", pt_entry);
-        kprintf("0x%08X contains 0x%08X\n",pt_entry,*pt_entry);
     }
     
     /* Write to the backing store */
@@ -143,7 +142,8 @@ status evict_frame(uint32 pfno) {
         return SYSERR;
     }
     int retries = 4, status;
-    kprintf("Writing page at 0x%08X to bs(%d)... ",src,bs);
+    hook_pswap_out(pfno+FRAME0,vfno+VFRAME0);
+    //kprintf("Writing page at 0x%08X to bs(%d)... ",src,bs);
     while((status = write_bs(src,bs,vfno)) != OK  && retries > 0) {
         retries --;
     }
@@ -168,6 +168,7 @@ status evict_frame(uint32 pfno) {
     ipt[ptpfno].ref--;
     if(ipt[ptpfno].ref <= 0 && ipt[ptpfno].is_pt == 1) {
         //kprintf("Freeing a PT frame\n");
+        hook_ptable_delete(ptpfno+FRAME0);
         pd_entry->pd_pres = 0;
         ipt[ptpfno].is_used = 0;
         ipt[ptpfno].is_pt = 0;
@@ -209,7 +210,8 @@ char *getframe(frame_t ft, pid32 pid, uint32 vfno) {
         i = find_evictable();
         if(i==-1) {
             //print_ipt();
-            kprintf("\nCould not find evictable!\n");
+            kprintf("\nCould not find an evictable frame!\n");
+            return NULL;
         }
         if(evict_frame(i) != OK) {
             kprintf("getframe: No free frames. Could not evict frames\n");
@@ -222,6 +224,7 @@ char *getframe(frame_t ft, pid32 pid, uint32 vfno) {
         ipt[i].is_pt = 1;
         ipt[i].ref = 0;
         ipt[i].vfno = invalid_vfno;
+        hook_ptable_create(i+FRAME0);
         break;
 
         case PD_FRAME:
@@ -251,7 +254,7 @@ char *getframe(frame_t ft, pid32 pid, uint32 vfno) {
     ipt[i].timestamp = get_logiclk_time();
     char* frame = (char *) ((FRAME0 + i)*NBPG);
     memset(frame,0x00,NBPG);
-    kprintf("getframe returning 0x%08X\n",frame);
+    //kprintf("getframe returning 0x%08X\n",frame);
     //print_ipt_stats();
 	restore(mask);
     return frame;
@@ -259,15 +262,18 @@ char *getframe(frame_t ft, pid32 pid, uint32 vfno) {
 
 status free_proc_frames(pid32 pid) {
     int i, freed=0;
-    kprintf("free_proc_frames: ");
+    //kprintf("free_proc_frames: ");
     for(i=0; i<NFRAMES; i++) {
         if(ipt[i].pid == pid) {
+            if(ipt[i].is_pt == 1) {
+                hook_ptable_delete(FRAME0+i);
+            }
             ipt[i].is_used = 0;
             ipt[i].is_pt = 0;
             ipt[i].pid = 0;
             freed++;
         }
     }
-    kprintf("freed %d frames\n",freed);
+    //kprintf("freed %d frames\n",freed);
     return OK;
 }

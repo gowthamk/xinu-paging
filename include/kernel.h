@@ -72,3 +72,4 @@ extern	qid16	readylist;	/* global ID for list of ready processes*/
 syscall	kprintf(char *fmt, ...);
 syscall	kputc(byte);
 syscall	kgetc(void);
+syscall dont_print(char *fmt, ...);
